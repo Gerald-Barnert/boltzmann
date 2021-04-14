@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 import camb
 import classy
 from classy import Class
@@ -15,10 +20,32 @@ kh,z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=2, npoints = 2000
 
 for i in range(0, len(zz)):
     plt.loglog(kh, pk[i,:])
+
+plt.ylabel(r'$p(k)\:[(Mpc/s)³]$')
+plt.xlabel(r'$k\:[h/Mpc]$')
+plt.show()
+#plt.savefig('p(k)_camb')
+plt.clf()
+
+H = []
+D_A = []
+A = results.get_BAO(zz, pars)
+for i in range(0, len(zz)):
+    hubble = A[i][1]
+    DA = A[i][2]
+    H.append(hubble)
+    D_A.append(DA)
+
+
+plt.plot(zz,H)
+plt.ylabel(r'$H(z)\:[Km\:s⁻¹\:Mpc⁻¹]$')
+plt.xlabel('z')
 plt.show()
 
-
-
+plt.plot(zz, D_A)
+plt.ylabel(r'$d_A\:(z) [Mpc]$')
+plt.xlabel('z')
+plt.show()
 
 '''
 LambdaCDM = Class()
