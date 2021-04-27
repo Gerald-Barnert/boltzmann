@@ -9,14 +9,19 @@ import matplotlib.pyplot as plt
 
 LambdaCDM = Class()
 LambdaCDM.set({'omega_b': 0.022, 'omega_cdm': 0.122, 'h': 0.70, 'z_max_pk':4})
-LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk' , 'lensing':'yes', 'P_k_max_1/Mpc': 3.0 })
+LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk', 'P_k_max_1/Mpc': 3.0 })
 LambdaCDM.compute()
+
+print(LambdaCDM.Omega0_cdm())
+print(LambdaCDM.h())
+print(0.122 / (LambdaCDM.h() * LambdaCDM.h()))
+
 
 kk = np.linspace(1e-4, 2, 2000)
 Pk = []
 Pk_z = []
 h = LambdaCDM.h()
-zz = np.arange(0,3.5,0.05)
+zz = np.arange(0,3,0.05)
 
 for z in zz:
     Pk = []
@@ -24,11 +29,13 @@ for z in zz:
         Pk.append(LambdaCDM.pk(k*h,z) * h**3)
     Pk_z.append(Pk)
 
-for i in range(0, len(zz)):
-    plt.loglog(kk, Pk_z[i])
+for i in range(0, len(zz), 10):
+    plt.loglog(kk, Pk_z[i], label='{}'.format(zz[i]))
 
-plt.ylabel(r'$p(k)\:[(Mpc/s)³]$')
+plt.legend(title='z')
+plt.ylabel(r'$P(k)\:[(Mpc/h)³]$')
 plt.xlabel(r'$k\:[h/Mpc]$')
+#plt.savefig('plots/P(k)_class')
 plt.show()
 #plt.savefig('p(k)_class')
 plt.clf()
@@ -46,9 +53,11 @@ print(H[0])
 plt.plot(zz,H)
 plt.ylabel(r'$H(z)\:[Km\:s⁻¹\:Mpc⁻¹]$')
 plt.xlabel('z')
+#plt.savefig('plots/H(z)_class')
 plt.show()
 
 plt.plot(zz, D_A)
-plt.ylabel(r'$d_A\:(z) [Mpc]$')
+plt.ylabel(r'$d_A(z)\: [Mpc]$')
 plt.xlabel('z')
+#plt.savefig('plots/d_A_class')
 plt.show()

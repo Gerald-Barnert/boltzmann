@@ -9,8 +9,9 @@ from classy import Class
 from camb import model
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 
-zz = np.arange(0,3.5,0.05)
+zz = np.arange(0,3,0.05)
 pars = camb.CAMBparams()
 pars.set_cosmology(H0=70, ombh2=0.022, omch2=0.122)
 #pars.InitPower.set_params(ns=0.965)
@@ -18,14 +19,17 @@ pars.set_matter_power(redshifts=zz, kmax=2.0)
 results = camb.get_results(pars)
 kh,z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=2, npoints = 2000)
 
-for i in range(0, len(zz)):
-    plt.loglog(kh, pk[i,:])
+k = kh / pars.h
+print(k)
 
-plt.ylabel(r'$p(k)\:[(Mpc/s)³]$')
-plt.xlabel(r'$k\:[h/Mpc]$')
-plt.show()
-#plt.savefig('p(k)_camb')
-plt.clf()
+
+
+omb = pars.ombh2
+omc = pars.omch2
+
+print((omb + omc)/(pars.h * pars.h))
+print(pars.h)
+print(pars.H0)
 
 H = []
 D_A = []
@@ -36,16 +40,40 @@ for i in range(0, len(zz)):
     H.append(hubble)
     D_A.append(DA)
 
+pars.InitPower.set_params(As=2e-9, ns=0.965, r=0)
+pars.set_for_lmax(2500, lens_potential_accuracy=0)
+powers =results.get_cmb_power_spectra(pars, CMB_unit='muK')
+for name in powers: print(name)
+totCL=powers['total']
+ls = np.arange(totCL.shape[0])
+CL_TT = totCL[:,0]
+
+plt.plot(ls[2:], CL_TT[2:])
+plt.show()
+
+'''
+for i in range(0, len(zz), 10):
+    plt.loglog(kh, pk[i,:], label = '{}'.format(zz[i]))
+
+plt.legend(title='z')
+plt.ylabel(r'$P(k)\:[(Mpc/h)³]$')
+plt.xlabel(r'$k\:[h/Mpc]$')
+#plt.savefig('plots/P(k)_camb')
+plt.show()
 
 plt.plot(zz,H)
 plt.ylabel(r'$H(z)\:[Km\:s⁻¹\:Mpc⁻¹]$')
 plt.xlabel('z')
+#plt.savefig('plots/H(z)_camb')
 plt.show()
 
 plt.plot(zz, D_A)
-plt.ylabel(r'$d_A\:(z) [Mpc]$')
+plt.ylabel(r'$d_A(z)\: [Mpc]$')
 plt.xlabel('z')
+#plt.savefig('plots/d_A_camb')
 plt.show()
+'''
+
 
 '''
 LambdaCDM = Class()
