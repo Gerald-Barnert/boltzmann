@@ -44,12 +44,22 @@ pars.InitPower.set_params(As=2e-9, ns=0.965, r=0)
 pars.set_for_lmax(2500, lens_potential_accuracy=0)
 powers =results.get_cmb_power_spectra(pars, CMB_unit='muK')
 for name in powers: print(name)
-totCL=powers['total']
-ls = np.arange(totCL.shape[0])
-CL_TT = totCL[:,0]
+totCl=powers['total']
+ls = np.arange(totCl.shape[0])
+Cl_TT = totCl[:,0]
+Cl_EE = totCl[:,1]
+Cl_BB = totCl[:,2]
+Cl_ET = totCl[:,3]
 
-plt.plot(ls[2:], CL_TT[2:])
+plt.plot(ls[3:], Cl_TT[3:])
 plt.show()
+plt.plot(ls[3:], Cl_EE[3:])
+plt.show()
+plt.plot(ls[3:], Cl_BB[3:])
+plt.show()
+plt.plot(ls[3:], Cl_ET[3:])
+plt.show()
+
 
 '''
 for i in range(0, len(zz), 10):

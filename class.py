@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 LambdaCDM = Class()
 LambdaCDM.set({'omega_b': 0.022, 'omega_cdm': 0.122, 'h': 0.70, 'z_max_pk':4})
-LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk', 'P_k_max_1/Mpc': 3.0 })
+LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk','lensing':'yes', 'P_k_max_1/Mpc': 3.0 })
 LambdaCDM.compute()
 
 print(LambdaCDM.Omega0_cdm())
@@ -29,6 +29,35 @@ for z in zz:
         Pk.append(LambdaCDM.pk(k*h,z) * h**3)
     Pk_z.append(Pk)
 
+c = 3e5
+
+H = []
+D_A = []
+for z in zz:
+    H.append(LambdaCDM.Hubble(z)*c)
+    D_A.append(LambdaCDM.angular_distance(z))
+
+Cl = LambdaCDM.lensed_cl(2500)
+print(Cl.viewkeys())
+
+ls = Cl['ell']
+Cl_TT = Cl['tt']*ls*(ls+1) / (2*np.pi)
+Cl_EE = Cl['ee']*ls*(ls+1) / (2*np.pi)
+Cl_BB = Cl['bb']*ls*(ls+1) / (2*np.pi)
+Cl_ET = Cl['te']*ls*(ls+1) / (2*np.pi)
+
+plt.plot(ls[3:], Cl_TT[3:])
+plt.show()
+plt.plot(ls[3:], Cl_EE[3:])
+plt.show()
+plt.plot(ls[3:], Cl_BB[3:])
+plt.show()
+plt.plot(ls[3:], Cl_ET[3:])
+plt.show()
+
+
+
+'''
 for i in range(0, len(zz), 10):
     plt.loglog(kk, Pk_z[i], label='{}'.format(zz[i]))
 
@@ -39,15 +68,6 @@ plt.xlabel(r'$k\:[h/Mpc]$')
 plt.show()
 #plt.savefig('p(k)_class')
 plt.clf()
-
-c = 3e5
-
-H = []
-D_A = []
-for z in zz:
-    H.append(LambdaCDM.Hubble(z)*c)
-    D_A.append(LambdaCDM.angular_distance(z))
-
 
 print(H[0])
 plt.plot(zz,H)
@@ -61,3 +81,4 @@ plt.ylabel(r'$d_A(z)\: [Mpc]$')
 plt.xlabel('z')
 #plt.savefig('plots/d_A_class')
 plt.show()
+'''
