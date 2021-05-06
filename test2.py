@@ -33,16 +33,30 @@ print(pars.H0)
 
 H = []
 D_A = []
+F_AP = []
 A = results.get_BAO(zz, pars)
 for i in range(0, len(zz)):
     hubble = A[i][1]
     DA = A[i][2]
+    F = A[i][3]
     H.append(hubble)
     D_A.append(DA)
+    F_AP.append(F)
+
+fsigma8 = results.get_fsigma8()
+sigma8 = results.get_sigma8()
+f_growth_rate = np.flip(fsigma8/sigma8)
+print(sigma8)
+
+plt.plot(zz, f_growth_rate)
+plt.ylabel(r'Growth rate $f_g(z)$')
+plt.xlabel(r'$z$')
+plt.savefig('plots/growth_rate_f(z)_camb')
+plt.show()
 
 pars.InitPower.set_params(As=2e-9, ns=0.965, r=0)
 pars.set_for_lmax(2500, lens_potential_accuracy=0)
-powers =results.get_cmb_power_spectra(pars, CMB_unit='muK')
+powers =results.get_cmb_power_spectra(pars, CMB_unit= None)
 for name in powers: print(name)
 totCl=powers['total']
 ls = np.arange(totCl.shape[0])
@@ -51,14 +65,18 @@ Cl_EE = totCl[:,1]
 Cl_BB = totCl[:,2]
 Cl_ET = totCl[:,3]
 
+'''
 plt.plot(ls[3:], Cl_TT[3:])
+plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
+plt.xlabel(r'$Multipole\: moment\: l$')
 plt.show()
-plt.plot(ls[3:], Cl_EE[3:])
-plt.show()
-plt.plot(ls[3:], Cl_BB[3:])
-plt.show()
-plt.plot(ls[3:], Cl_ET[3:])
-plt.show()
+'''
+#plt.plot(ls[3:], Cl_EE[3:])
+#plt.show()
+#plt.plot(ls[3:], Cl_BB[3:])
+#plt.show()
+#plt.plot(ls[3:], Cl_ET[3:])
+#plt.show()
 
 
 '''
