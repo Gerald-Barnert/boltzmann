@@ -65,12 +65,13 @@ Cl_EE = totCl[:,1]
 Cl_BB = totCl[:,2]
 Cl_ET = totCl[:,3]
 
-'''
+
 plt.plot(ls[3:], Cl_TT[3:])
 plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
-plt.xlabel(r'$Multipole\: moment\: l$')
+plt.xlabel('Multipole moment l')
+plt.savefig('plots/C(l)_camb')
 plt.show()
-'''
+
 #plt.plot(ls[3:], Cl_EE[3:])
 #plt.show()
 #plt.plot(ls[3:], Cl_BB[3:])
