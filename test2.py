@@ -73,7 +73,8 @@ plt.plot(ls[3:], Cl_TT[3:])
 plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
 plt.xlabel('Multipole moment l')
 #plt.savefig('plots/C(l)_camb')
-plt.show()
+#plt.show()
+plt.clf()
 
 #plt.plot(ls[3:], Cl_EE[3:])
 #plt.show()
@@ -83,16 +84,17 @@ plt.show()
 #plt.show()
 
 
-'''
-for i in range(0, len(zz), 10):
-    plt.loglog(kh, pk[i,:], label = '{}'.format(zz[i]))
 
+#for i in range(0, len(zz), 10):
+#    plt.loglog(kh, pk[i,:], label = '{}'.format(zz[i]))
+
+plt.loglog(kh, pk[len(zz)-1,:])
 plt.legend(title='z')
 plt.ylabel(r'$P(k)\:[(Mpc/h)³]$')
 plt.xlabel(r'$k\:[h/Mpc]$')
 #plt.savefig('plots/P(k)_camb')
 plt.show()
-
+'''
 plt.plot(zz,H)
 plt.ylabel(r'$H(z)\:[Km\:s⁻¹\:Mpc⁻¹]$')
 plt.xlabel('z')
