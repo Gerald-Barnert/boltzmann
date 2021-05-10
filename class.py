@@ -54,7 +54,7 @@ Cl_EE = Cl['ee']*ls*(ls+1) / (2*np.pi)
 Cl_BB = Cl['bb']*ls*(ls+1) / (2*np.pi)
 Cl_ET = Cl['te']*ls*(ls+1) / (2*np.pi)
 
-
+'''
 plt.plot(ls[3:], Cl_TT[3:])
 plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
 plt.xlabel('Multipole moment l')
@@ -66,7 +66,7 @@ plt.show()
 #plt.show()
 #plt.plot(ls[3:], Cl_ET[3:])
 #plt.show()
-
+'''
 
 
 '''
