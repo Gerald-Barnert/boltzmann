@@ -8,6 +8,4 @@ import matplotlib.pyplot as plt
 
 
 
-def P_k(code, redshifts, H0, omega_b, omega_cdm, kmax):
-    if code == "camb":
         

@@ -2,7 +2,6 @@
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
-
 from classy import Class
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +14,6 @@ LambdaCDM.compute()
 print(LambdaCDM.Omega0_cdm())
 print(LambdaCDM.h())
 print(0.122 / (LambdaCDM.h() * LambdaCDM.h()))
-
 
 kk = np.linspace(1e-4, 2, 2000)
 Pk = []
@@ -33,23 +31,34 @@ c = 3e5
 
 H = []
 D_A = []
+growth_rate_f = []
 for z in zz:
     H.append(LambdaCDM.Hubble(z)*c)
     D_A.append(LambdaCDM.angular_distance(z))
+    growth_rate_f.append(LambdaCDM.scale_independent_growth_factor_f(z))
+
+'''
+plt.plot(zz, growth_rate_f)
+plt.ylabel(r'Growth rate $f_g(z)$')
+plt.xlabel(r'$z$')
+#plt.savefig('plots/growth_rate_f(z)_class')
+plt.show()
+'''
 
 Cl = LambdaCDM.lensed_cl(2500)
 print(Cl.viewkeys())
 
 ls = Cl['ell']
-Cl_TT = Cl['tt']*ls*(ls+1) / (2*np.pi)
+Cl_TT = Cl['tt']*ls*(ls+1) / (2*np.pi) * (LambdaCDM.T_cmb()*10**6)**2
 Cl_EE = Cl['ee']*ls*(ls+1) / (2*np.pi)
 Cl_BB = Cl['bb']*ls*(ls+1) / (2*np.pi)
 Cl_ET = Cl['te']*ls*(ls+1) / (2*np.pi)
 
+
 plt.plot(ls[3:], Cl_TT[3:])
 plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
 plt.xlabel('Multipole moment l')
-plt.savefig('plots/C(l)_class')
+#plt.savefig('plots/C(l)_class')
 plt.show()
 #plt.plot(ls[3:], Cl_EE[3:])
 #plt.show()

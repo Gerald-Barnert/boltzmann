@@ -48,15 +48,18 @@ sigma8 = results.get_sigma8()
 f_growth_rate = np.flip(fsigma8/sigma8)
 print(sigma8)
 
+'''
 plt.plot(zz, f_growth_rate)
 plt.ylabel(r'Growth rate $f_g(z)$')
 plt.xlabel(r'$z$')
 plt.savefig('plots/growth_rate_f(z)_camb')
 plt.show()
+'''
 
-pars.InitPower.set_params(As=2e-9, ns=0.965, r=0)
+#pars.InitPower.set_params(As=2e-9, ns=0.965, r=0)
+pars.InitPower.set_params()
 pars.set_for_lmax(2500, lens_potential_accuracy=0)
-powers =results.get_cmb_power_spectra(pars, CMB_unit= None)
+powers =results.get_cmb_power_spectra(pars, CMB_unit= 'muK')
 for name in powers: print(name)
 totCl=powers['total']
 ls = np.arange(totCl.shape[0])
@@ -69,7 +72,7 @@ Cl_ET = totCl[:,3]
 plt.plot(ls[3:], Cl_TT[3:])
 plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
 plt.xlabel('Multipole moment l')
-plt.savefig('plots/C(l)_camb')
+#plt.savefig('plots/C(l)_camb')
 plt.show()
 
 #plt.plot(ls[3:], Cl_EE[3:])
