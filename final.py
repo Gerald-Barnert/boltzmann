@@ -121,6 +121,29 @@ def Angular_power_spectrum(z, run, code, l_max, units):
         #Cl_ET = Cl['te']*ls*(ls+1) / (2*np.pi)
         return ls[3:], Cl_TT[3:]
 
+
+def P_k_camb(z, pk, zplot, kh, P, P_z):
+    for i in range(0, len(z)):
+        P.append(pk[i,:])
+        for z_j in zplot:
+            if z[i] == z_j:
+                P_z.append(pk[i,:])
+    #return kh, P, P_z
+
+def P_k_class(z, kk, h, zplot, Pk, P, Pk_z, run):
+    for zz in z:
+            P = []
+            for k in kk:
+                P.append(run.pk(k*h,zz) * h**3)
+            Pk.append(P)
+
+            for z_j in zplot:
+                if zz == z_j:
+                    Pk_zz = []
+                    for k in kk:
+                        Pk_zz.append(run.pk(k*h,z_j) * h**3)
+                    Pk_z.append(Pk_zz)
+
 def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_points=2000):
     if code == "camb":
         pars = run[0]
@@ -132,12 +155,16 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
         kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
         P = [] 
         P_z = []
-        for i in range(0, len(z)):
-            P.append(pk[i,:])
-            for z_j in zplot:
-                if z[i] == z_j:
-                    P_z.append(pk[i,:])
+        P_k_camb(z, pk, zplot, kh, P, P_z)
         return kh, P, P_z
+        #P = [] 
+        #P_z = []
+        #for i in range(0, len(z)):
+        #    P.append(pk[i,:])
+        #    for z_j in zplot:
+        #        if z[i] == z_j:
+        #            P_z.append(pk[i,:])
+        #return kh, P, P_z
 
     if code == "class":
         kk = np.linspace(kmin, kmax, number_points)
@@ -146,6 +173,8 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
         Pk_z = []
         h = run.h()
         print(h)
+        P_k_class(z, kk, h, zplot, Pk, P, Pk_z, run)
+        '''
         for zz in z:
             P = []
             for k in kk:
@@ -158,9 +187,7 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
                     for k in kk:
                         Pk_zz.append(run.pk(k*h,z_j) * h**3)
                     Pk_z.append(Pk_zz)
-            
-            
-            
+        '''
         #for i in range(0, len(z)):
         #    P.append(Pk_z[i])
         return kk, Pk, Pk_z
