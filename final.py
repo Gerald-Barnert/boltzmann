@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 import camb
 import classy
 from classy import Class
@@ -23,26 +26,6 @@ def run(code, Hubble0, om_b, om_cdm):
         LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk','lensing':'yes', 'P_k_max_1/Mpc': 3.0 })
         LambdaCDM.compute()
         return LambdaCDM
-
-zmin = 0
-zmax = 3
-step = 0.05
-zz = np.arange(zmin,zmax,step)
-camb_code = run("camb", 70, 0.022, 0.122)
-class_code = run("class", 70, 0.022, 0.122)
-
-#pars, results = camb_code[0], camb_code[1]
-#results = camb_code[1]
-#print(results)
-#pars = camb.CAMBparams()
-#pars.set_cosmology(H0=70, ombh2=0.022, omch2=0.122)
-#pars.InitPower.set_params(ns=0.965)
-#pars.set_matter_power(redshifts=zz, kmax=2.0)
-#results = camb.get_results(pars)
-#print(results)
-#kh,z, pk = results.get_matter_power_spectrum(minkh=1e-4, maxkh=2, npoints = 2000)
-#fsigma8 = results.get_fsigma8()
-
 
 def HubbleParameter(z, run, code):
     if code == "camb":
@@ -80,8 +63,6 @@ def growth_rate(z, run, code):
     if code == "camb":
         pars = run[0]
         results = run[1]
-        #results = camb.get_results(pars)
-        #pars.set_matter_power(redshifts=z, kmax=2.0)
         results.get_matter_power_spectrum(minkh=1e-4, maxkh=2, npoints = 2000)
         fsigma8 = results.get_fsigma8()
         sigma8 = results.get_sigma8()
@@ -128,7 +109,6 @@ def P_k_camb(z, pk, zplot, kh, P, P_z):
         for z_j in zplot:
             if z[i] == z_j:
                 P_z.append(pk[i,:])
-    #return kh, P, P_z
 
 def P_k_class(z, kk, h, zplot, Pk, P, Pk_z, run):
     for zz in z:
@@ -136,7 +116,6 @@ def P_k_class(z, kk, h, zplot, Pk, P, Pk_z, run):
             for k in kk:
                 P.append(run.pk(k*h,zz) * h**3)
             Pk.append(P)
-
             for z_j in zplot:
                 if zz == z_j:
                     Pk_zz = []
@@ -147,24 +126,13 @@ def P_k_class(z, kk, h, zplot, Pk, P, Pk_z, run):
 def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_points=2000):
     if code == "camb":
         pars = run[0]
-        #results = run[1]
         results = camb.get_results(pars)
         pars.InitPower.set_params()
-        #pars.set_matter_power(redshifts=z, kmax=kmax)
-        #pars.set_for_lmax(l_max, lens_potential_accuracy=0)
         kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
         P = [] 
         P_z = []
         P_k_camb(z, pk, zplot, kh, P, P_z)
         return kh, P, P_z
-        #P = [] 
-        #P_z = []
-        #for i in range(0, len(z)):
-        #    P.append(pk[i,:])
-        #    for z_j in zplot:
-        #        if z[i] == z_j:
-        #            P_z.append(pk[i,:])
-        #return kh, P, P_z
 
     if code == "class":
         kk = np.linspace(kmin, kmax, number_points)
@@ -172,28 +140,20 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
         P = []
         Pk_z = []
         h = run.h()
-        print(h)
         P_k_class(z, kk, h, zplot, Pk, P, Pk_z, run)
-        '''
-        for zz in z:
-            P = []
-            for k in kk:
-                P.append(run.pk(k*h,zz) * h**3)
-            Pk.append(P)
-
-            for z_j in zplot:
-                if zz == z_j:
-                    Pk_zz = []
-                    for k in kk:
-                        Pk_zz.append(run.pk(k*h,z_j) * h**3)
-                    Pk_z.append(Pk_zz)
-        '''
-        #for i in range(0, len(z)):
-        #    P.append(Pk_z[i])
         return kk, Pk, Pk_z
 
-p1 = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot= [0,1,2])
-p2 = Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=[0,1,2])
+
+z_plot = [0, 0.1, 0.2, 0.3, 1, 2]
+zmin = 0
+zmax = 3
+step = 0.05
+zz = np.arange(zmin,zmax,step)
+camb_code = run("camb", 70, 0.022, 0.122)
+class_code = run("class", 70, 0.022, 0.122)
+
+p1 = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot=z_plot)
+p2 = Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=z_plot)
 
 a1 = Angular_power_spectrum(zz, camb_code, "camb", l_max=2500, units=None)
 a2 = Angular_power_spectrum(zz, class_code, "class", l_max=2500, units=None)
@@ -207,23 +167,43 @@ d_a2 = Angular_diameter_distance(zz, class_code, "class")
 f1 = growth_rate(zz, camb_code, "camb")
 f2 = growth_rate(zz, class_code, "class")
 
-plt.loglog(p1[0], p1[2][0])
-plt.loglog(p1[0], p1[2][1])
-plt.loglog(p1[0], p1[2][2])
 
-plt.loglog(p2[0], p2[2][0])
-plt.loglog(p2[0], p2[2][1])
-plt.loglog(p2[0], p2[2][2])
-
-
-#plt.plot(a1[0], a1[1])
-#plt.plot(a2[0], a2[1])
-
-#plt.plot(zz,d_a)
-#plt.plot(zz,d_a2)
-
-#plt.plot(zz, huble)
-#plt.plot(zz, huble2)
+for i in range(len(z_plot)-1):
+    plt.loglog(p1[0], p1[2][i], label = '{}'.format(z_plot[i]))
+plt.legend(title='z')
+plt.ylabel(r'$P(k)\:[(Mpc/h)³]$')
+plt.xlabel(r'$k\:[h/Mpc]$')
 plt.show()
 
+for i in range(len(z_plot)-1):
+    plt.loglog(p2[0], p2[2][i], label = '{}'.format(z_plot[i]))
+
+plt.legend(title='z')
+plt.ylabel(r'$P(k)\:[(Mpc/h)³]$')
+plt.xlabel(r'$k\:[h/Mpc]$')
+plt.show()
+
+plt.plot(a1[0], a1[1])
+plt.plot(a2[0], a2[1])
+plt.ylabel(r'$l(l+1)\:C^{TT}_l\: / 2\pi$')
+plt.xlabel('Multipole moment l')
+plt.show()
+
+plt.plot(zz,d_a)
+plt.plot(zz,d_a2)
+plt.ylabel(r'$d_A(z)\: [Mpc]$')
+plt.xlabel('z')
+plt.show()
+
+plt.plot(zz, huble)
+plt.plot(zz, huble2)
+plt.ylabel(r'$H(z)\:[Km\:s⁻¹\:Mpc⁻¹]$')
+plt.xlabel('z')
+plt.show()
+
+plt.plot(zz, f1)
+plt.plot(zz, f2)
+plt.ylabel(r'Growth rate $f_g(z)$')
+plt.xlabel(r'$z$')
+plt.show()
 
