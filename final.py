@@ -24,7 +24,10 @@ def run(code, Hubble0, om_b, om_cdm):
         LambdaCDM.compute()
         return LambdaCDM
 
-zz = np.arange(0,3,0.05)
+zmin = 0
+zmax = 3
+step = 0.05
+zz = np.arange(zmin,zmax,step)
 camb_code = run("camb", 70, 0.022, 0.122)
 class_code = run("class", 70, 0.022, 0.122)
 
@@ -118,36 +121,52 @@ def Angular_power_spectrum(z, run, code, l_max, units):
         #Cl_ET = Cl['te']*ls*(ls+1) / (2*np.pi)
         return ls[3:], Cl_TT[3:]
 
-def Matter_power_spectrum(z, run, code, l_max, kmin=1e-4, kmax=2, number_points=2000):
+def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_points=2000):
     if code == "camb":
         pars = run[0]
-        results = run[1]
+        #results = run[1]
+        results = camb.get_results(pars)
         pars.InitPower.set_params()
-        pars.set_matter_power(redshifts=z, kmax=kmax)
-        pars.set_for_lmax(l_max, lens_potential_accuracy=0)
+        #pars.set_matter_power(redshifts=z, kmax=kmax)
+        #pars.set_for_lmax(l_max, lens_potential_accuracy=0)
         kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
         P = [] 
+        P_z = []
         for i in range(0, len(z)):
             P.append(pk[i,:])
-        return kh, P
+            for z_j in zplot:
+                if z[i] == z_j:
+                    P_z.append(pk[i,:])
+        return kh, P, P_z
 
     if code == "class":
         kk = np.linspace(kmin, kmax, number_points)
-        Pk_z = []
+        Pk = []
         P = []
+        Pk_z = []
         h = run.h()
         print(h)
         for zz in z:
-            Pk = []
+            P = []
             for k in kk:
-                Pk.append(run.pk(k*h,zz) * h**3)
-            Pk_z.append(Pk)
+                P.append(run.pk(k*h,zz) * h**3)
+            Pk.append(P)
+
+            for z_j in zplot:
+                if zz == z_j:
+                    Pk_zz = []
+                    for k in kk:
+                        Pk_zz.append(run.pk(k*h,z_j) * h**3)
+                    Pk_z.append(Pk_zz)
+            
+            
+            
         #for i in range(0, len(z)):
         #    P.append(Pk_z[i])
-        return kk, Pk_z
+        return kk, Pk, Pk_z
 
-p1 = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500)
-p2 = Matter_power_spectrum(zz, class_code, "class", l_max=2500)
+p1 = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot= [0,1,2])
+p2 = Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=[0,1,2])
 
 a1 = Angular_power_spectrum(zz, camb_code, "camb", l_max=2500, units=None)
 a2 = Angular_power_spectrum(zz, class_code, "class", l_max=2500, units=None)
@@ -161,8 +180,14 @@ d_a2 = Angular_diameter_distance(zz, class_code, "class")
 f1 = growth_rate(zz, camb_code, "camb")
 f2 = growth_rate(zz, class_code, "class")
 
-#plt.loglog(p1[0], p1[1][0])
-#plt.loglog(p2[0], p2[1][0])
+plt.loglog(p1[0], p1[2][0])
+plt.loglog(p1[0], p1[2][1])
+plt.loglog(p1[0], p1[2][2])
+
+plt.loglog(p2[0], p2[2][0])
+plt.loglog(p2[0], p2[2][1])
+plt.loglog(p2[0], p2[2][2])
+
 
 #plt.plot(a1[0], a1[1])
 #plt.plot(a2[0], a2[1])
@@ -173,4 +198,5 @@ f2 = growth_rate(zz, class_code, "class")
 #plt.plot(zz, huble)
 #plt.plot(zz, huble2)
 plt.show()
+
 
