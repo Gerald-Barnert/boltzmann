@@ -16,14 +16,15 @@ def run(code, Hubble0, om_b, om_cdm):
         pars = camb.CAMBparams()
         pars.set_cosmology(H0=Hubble0, ombh2=om_b, omch2=om_cdm, tau=0.09)
         results = camb.get_results(pars)
+        pars.InitPower.set_params(As=2.3e-9, ns=0.96, r=0)
         pars.set_matter_power(redshifts=zz, kmax=2.0)
         return pars, results
     
     if code == "class":
         LambdaCDM = Class()
-        h = 0.7
+        h = float(Hubble0) /100
         LambdaCDM.set({'omega_b': 0.022, 'omega_cdm': 0.122, 'h': h, 'z_max_pk':4, 'A_s':2.3e-9, 'n_s':0.96, 'tau_reio':0.09})
-        LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk','lensing':'yes', 'P_k_max_1/Mpc': 2.0 })
+        LambdaCDM.set({'output': 'tCl, lCl, pCl, mPk','lensing':'yes', 'P_k_max_1/Mpc': 3.0 })
         LambdaCDM.compute()
         return LambdaCDM
 
@@ -282,8 +283,3 @@ plt.show()
 plt.plot(zz, h1)
 plt.plot(zz, h2)
 plt.show()
-
-
-
-print(k1)
-print(k2)
