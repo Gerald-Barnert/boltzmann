@@ -58,7 +58,7 @@ def HubbleParameter(z, run, code):
 
     Args:
         z (list): array of redshifts
-        run (func): initialize CAMB or CLASS
+        run (func): initialization CAMB or CLASS
         code (str): "camb" or "class"
 
     Returns:
@@ -80,7 +80,7 @@ def Angular_diameter_distance(z, run, code):
 
     Args:
         z (list): array of redshifts
-        run (func): initialize CAMB or CLASS
+        run (func): initialization CAMB or CLASS
         code (str): "camb" or "class"
 
     Returns:
@@ -98,6 +98,19 @@ def Angular_diameter_distance(z, run, code):
         return D_A
 
 def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000):
+    """compute growth rate
+
+    Args:
+        z (list): array of redshifts
+        run (func): initialization CAMB or CLASS
+        code (str): "camb" or "class"
+        min_k (float, optional): minimum k to calculate. Defaults to 1e-4.
+        max_k (float, optional): maximum k to calculate. Defaults to 3.
+        n_points (int, optional): lenght of k array. Defaults to 2000.
+
+    Returns:
+        list: growth rate
+    """
     if code == "camb":
         pars, results = run[0], run[1]
         results.get_matter_power_spectrum(minkh=min_k, maxkh=max_k, npoints = n_points)
@@ -111,6 +124,19 @@ def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000):
         return growth_rate_f
 
 def Angular_power_spectrum(z, run, code, l_max, units, lens_accuracy=0):
+    """compute angular power spectrum
+
+    Args:
+        z (list): array of redshifts
+        run (func): initialization CAMB or CLASS
+        code (str): "camb" or "class"
+        l_max (float): maximum multipolar moment
+        units (str): None or 'muK'
+        lens_accuracy (float, optional): Set to 1 or higher if you want to get the lensing potential accurate. Defaults to 0.
+
+    Returns:
+        list: angular power spectrum
+    """
     if code == "camb":
         pars, results = run[0], run[1]
         pars.set_for_lmax(l_max, lens_potential_accuracy=lens_accuracy)
@@ -137,82 +163,91 @@ def Angular_power_spectrum(z, run, code, l_max, units, lens_accuracy=0):
         return ls[3:], Cl_TT[3:]
 
 
-def P_k_camb_plot(z, pk, zplot, P_z, units,h):
-    if units == 'Mpc/h':
+def P_k_camb(z, pk, zplot, P_z, units,h):
+    """compute matter power spectrum for zplot redshifts
+       function used in func Matter_power_spectrum
+
+    Args:
+        z (list): array of redshifts
+        pk (list): matter power spectrum array computed by camb o class
+        zplot (list): redshifts to return
+        P_z (list): Pk(zplot)
+        units (str): 'Mpc/h' or 'Mpc'
+        h (float): hubble constant
+    """
+    if units == '(Mpc/h)^3':
         for i in range(0, len(z)):
             for z_j in zplot:
                 if z[i] == z_j:
                     P_z.append(pk[i,:])
-    if units == 'Mpc':
+    if units == 'Mpc^3':
         for i in range(0, len(z)):
             for z_j in zplot:
                 if z[i] == z_j:
                     P_z.append(pk[i,:])
 
+def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_points=2000, plot="yes", units='(Mpc/h)^3'):
+    """compute matter power spectrum
 
-def P_k_class(z, kk, h, zplot, Pk, Pk_z, run, pk_vect, plot, units):
-    if units == 'Mpc/h':
-        for zz in z:
-            P = pk_vect(kk*h,zz) * h**3
-            Pk.append(P)
-            if plot == 'yes':
-                for z_j in zplot:
-                    if zz == z_j:
-                        Pk_zz = pk_vect(kk*h,z_j) * h**3
-                        Pk_z.append(Pk_zz)
-    if units == 'Mpc':
-        for zz in z:
-            P = pk_vect(kk,zz)
-            Pk.append(P)
-            if plot == 'yes':
-                for z_j in zplot:
-                    if zz == z_j:
-                        Pk_zz = pk_vect(kk,z_j)
-                        Pk_z.append(Pk_zz)
+    Args:
+        z (list): array of redshifts
+        run (func): initialization CAMB or CLASS
+        code (str): "camb" or "class"
+        l_max (float): maximum multipolar moment
+        zplot (list): redshifts to return
+        kmin (float, optional): minimum k to calculate. Defaults to 1e-4.
+        kmax (float, optional): maximum k to calculate. Defaults to 2.
+        number_points (int, optional): lenght of k array. Defaults to 2000.
+        plot (str, optional): if 'yes' compute P_k for zplot redshifts
+                              if 'no' compute P_k for z redshifts. Defaults to "yes".
+        units (str, optional): '(Mpc/h)^3' or 'Mpc^3'. Defaults to '(Mpc/h)^3'.
 
-
-
-def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_points=2000, plot="yes", units='Mpc/h'):
+    Returns:
+        list: k, P_k
+    """
     if code == "camb":
-        if units == 'Mpc/h':
+        if units == '(Mpc/h)^3':
             pars = run[0]
             results = camb.get_results(pars)
             h = results.h_of_z(0)
             kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
             P_z = []
             if plot == "yes":
-                P_k_camb_plot(z, pk, zplot, P_z, units,h)
+                P_k_camb(z, pk, zplot, P_z, units,h)
                 return kh, pk, P_z
             if plot == "no":
                 return kh, pk
-        if units == 'Mpc':
+    
+        if units == 'Mpc^3':
             pars = run[0]
             results = camb.get_results(pars)
             h = results.h_of_z(0)
             kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
+            interpolator = results.get_matter_power_interpolator(pars, hubble_units=False, k_hunit=False)
+            #kh,z,pk = results.get_nonlinear_matter_power_spectrum(params=pars, hubble_units=False)
+            pk = interpolator.P(z,kh)
             P_z = []
             if plot == "yes":
-                P_k_camb_plot(z, pk, zplot, P_z, units,h)
+                P_k_camb(z, pk, zplot, P_z, units,h)
                 return kh, pk, P_z
             if plot == "no":
                 return kh, pk
 
 
     if code == "class":
-        if units == 'Mpc/h':
+        if units == '(Mpc/h)^3':
             kk = np.linspace(kmin, kmax, number_points)
             Pk = []
             P = []
             Pk_z = []
             h = run.h()
             pk_vect = np.vectorize(run.pk)
-            P_k_class(z, kk, h, zplot, Pk, Pk_z, run, pk_vect, plot, units)
-            if plot == 'yes':
-                return kk, Pk, Pk_z
-            if plot == 'no':
-                return kk, Pk
+            for zz in z:
+                P = pk_vect(kk*h,zz) * h**3
+                Pk.append(P)
+            return kk, Pk
 
-        if units == 'Mpc':
+        if units == 'Mpc^3':
             kk = np.linspace(kmin, kmax, number_points)
             Pk = []
             P = []
@@ -220,11 +255,10 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             h = run.h()
             k = kk/h
             pk_vect = np.vectorize(run.pk)
-            P_k_class(z, kk, h, zplot, Pk, Pk_z, run, pk_vect, plot, units)
-            if plot == 'yes':
-                return k, Pk, Pk_z
-            if plot == 'no':
-                return k, Pk
+            for zz in z:
+                P = pk_vect(kk,zz)
+                Pk.append(P)
+            return k, Pk
 
 
 z_plot = [0,1,2]
@@ -238,8 +272,8 @@ zz = np.arange(zmin,zmax,step)
 camb_code = run("camb", 70, 0.04, 0.24)
 class_code = run("class", 70, 0.04, 0.24)
 
-p1 = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot=z_plot, plot='yes', units='Mpc')
-p2 = Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=z_plot, plot='yes', units='Mpc')
+p1 = Matter_power_spectrum(z_plot, camb_code, "camb", l_max=2500, zplot=z_plot, plot='yes', units='Mpc^3')
+p2 = Matter_power_spectrum(z_plot, class_code, "class", l_max=2500, zplot=z_plot, plot='yes', units='Mpc^3')
 
 a1 = Angular_power_spectrum(zz, camb_code, "camb", l_max=2500, units=None)
 a2 = Angular_power_spectrum(zz, class_code, "class", l_max=2500, units=None)
@@ -266,7 +300,7 @@ plt.clf()
 #plt.show()
 
 for i in range(len(z_plot)):
-    plt.loglog(p2[0], p2[2][i], label = '{}'.format(z_plot[i]))
+    plt.loglog(p2[0], p2[1][i], label = '{}'.format(z_plot[i]))
 
 plt.legend(title='z')
 plt.ylabel(r'$P(k)\:[(Mpc/h)³]$')
