@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Este script define funciones que calculan cantidades cosmologicas (matter power spectrum,
+angular power spectrum, angular diameter distance, hubble parameter, growth rate) para
+parametros cosmologicos a eleccion, utilizando ya sea CAMB o CLASS.
+"""
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -9,10 +14,11 @@ import matplotlib.pyplot as plt
 
 c = 3e5
 
-def run(code, Hubble0, Om_b, Om_cdm, As=2.3e-9, ns=0.96,r=0, z_pk_max=4,tau=0.09, k_max=3):
+def run(zz, code, Hubble0, Om_b, Om_cdm, As=2.3e-9, ns=0.96,r=0, z_pk_max=4,tau=0.09, k_max=3):
     """initialize CAMB or CLASS
 
     Args:
+        zz (list): array of redshifts
         code (str): "camb" or "class"
         Hubble0 (float): hubble constant in [km/s/Mpc], ex: 70
         Om_b (float): Omega baryon, ex: 0.04
@@ -64,13 +70,13 @@ def HubbleParameter(z, run, code):
     """
     if code == "camb":
         pars, results = run[0], run[1]
-        A = results.get_BAO(zz, pars)
+        A = results.get_BAO(z, pars)
         H = A[:,1] 
         return H
 
     if code == "class":
         hubble_vect = np.vectorize(run.Hubble)
-        H = hubble_vect(zz)*c
+        H = hubble_vect(z)*c
         return H
 
 def Angular_diameter_distance(z, run, code):
@@ -86,13 +92,13 @@ def Angular_diameter_distance(z, run, code):
     """
     if code == "camb":
         pars, results = run[0], run[1]
-        A = results.get_BAO(zz, pars)
+        A = results.get_BAO(z, pars)
         D_A = A[:,2]
         return D_A
 
     if code == "class":
         DA_vect = np.vectorize(run.angular_distance)
-        D_A = DA_vect(zz)
+        D_A = DA_vect(z)
         return D_A
 
 def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000):
@@ -118,7 +124,7 @@ def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000):
 
     if code == "class":
         f_vect = np.vectorize(run.scale_independent_growth_factor_f)
-        growth_rate_f = f_vect(zz)
+        growth_rate_f = f_vect(z)
         return growth_rate_f
 
 def Angular_power_spectrum(z, run, code, l_max, units, lens_accuracy=0):
@@ -221,9 +227,9 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             results = camb.get_results(pars)
             h = results.h_of_z(0)
             kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
-            interpolator = results.get_matter_power_interpolator(pars, hubble_units=False, k_hunit=False)
+            #interpolator = results.get_matter_power_interpolator(pars, hubble_units=False, k_hunit=False)
             #kh,z,pk = results.get_nonlinear_matter_power_spectrum(params=pars, hubble_units=False)
-            pk = interpolator.P(z,kh)
+            #pk = interpolator.P(z,kh)
             P_z = []
             if plot == "yes":
                 P_k_camb(z, pk, zplot, P_z, units,h)
@@ -259,6 +265,7 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             return k, Pk
 
 
+'''
 z_plot = [0,1,2]
 zmin = 0
 zmax = 3
@@ -267,8 +274,8 @@ zz = np.arange(zmin,zmax,step)
 #camb_code = run("camb", 70, 0.022, 0.122)
 #class_code = run("class", 70, 0.022, 0.122)
 
-camb_code = run("camb", 70, 0.04, 0.24)
-class_code = run("class", 70, 0.04, 0.24)
+camb_code = run(zz, "camb", 70, 0.04, 0.24)
+class_code = run(zz, "class", 70, 0.04, 0.24)
 
 p1 = Matter_power_spectrum(z_plot, camb_code, "camb", l_max=2500, zplot=z_plot, plot='yes', units='Mpc^3')
 p2 = Matter_power_spectrum(z_plot, class_code, "class", l_max=2500, zplot=z_plot, plot='yes', units='Mpc^3')
@@ -376,8 +383,6 @@ def save_data(code, zz, hubble_array, om_b_array, om_cdm_array, APSunits=None):
                         #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_d_A(z)/class_d_A(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", ADD)
                         #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_f(z)/class_f(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", GR)
                         
-
-'''
 hubble_array = np.arange(65,75,5)
 om_b_array = np.arange(0.01,0.03,0.01)
 om_cdm_array = np.arange(0.1,0.3,0.1)
