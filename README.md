@@ -8,6 +8,7 @@ cosmological quantities. Every function works depending of the boltzmann code. T
 CAMB or CLASS setting the cosmology and power spectra. Every other function get 'run' as a parameter to compute the other quantities.
 ```python
 #EXAMPLE
+import numpy as np
 import boltzmann_codes
 
 zmin, zmax, step = 0, 3, 0.05
