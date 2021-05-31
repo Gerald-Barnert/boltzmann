@@ -10,10 +10,12 @@ CAMB or CLASS setting the cosmology and power spectra. Every other function get 
 #EXAMPLE
 import boltzmann_codes
 
-zz = np.arange(zmin=0, zmax=3, step=0.05)
-camb_code = boltzmann_codes.run(redshift=zz, boltzamnn_code="camb", hubble_constant=70, 
-                                omega_baryion=0.04, omega_dark_matter=0.24)
-hubbleparameter = boltzmann_codes.HubbleParameter(zz, camb_code, "camb")
+zmin, zmax, step = 0, 3, 0.05
+redshifts = np.arange(zmin, zmax, step)
+code = 'camb'
+hubble_constant, omega_baryon, omega_dark_matter = 70, 0.04, 0.24
+camb_code = boltzmann_codes.run(redshifts, code, hubble_constant, omega_baryon, omega_dark_matter)
+hubble_parameter = boltzmann_codes.HubbleParameter(redshifts, camb_code, code)
 ```
 cosmology.py it is an example of the usage of boltzmann_codes.py.
 ## License
