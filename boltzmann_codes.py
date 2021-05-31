@@ -146,13 +146,12 @@ def Angular_power_spectrum(z, run, code, l_max, units, lens_accuracy=0):
         pars.set_for_lmax(l_max, lens_potential_accuracy=lens_accuracy)
         powers =results.get_cmb_power_spectra(pars, CMB_unit= units)
         totCl=powers['total']
-        results.get_cmb_unlensed_scalar_array_dict
         ls = np.arange(totCl.shape[0])
         Cl_TT = totCl[:,0]
         #Cl_EE = totCl[:,1]
         #Cl_BB = totCl[:,2]
         #Cl_ET = totCl[:,3]
-        return ls[3:], Cl_TT[3:]
+        return ls, Cl_TT
 
     if code == "class":
         Cl = run.lensed_cl(l_max)
@@ -164,7 +163,7 @@ def Angular_power_spectrum(z, run, code, l_max, units, lens_accuracy=0):
         #Cl_EE = Cl['ee']*ls*(ls+1) / (2*np.pi)
         #Cl_BB = Cl['bb']*ls*(ls+1) / (2*np.pi)
         #Cl_ET = Cl['te']*ls*(ls+1) / (2*np.pi)
-        return ls[3:], Cl_TT[3:]
+        return ls, Cl_TT
 
 
 def P_k_camb(z, pk, zplot, P_z, units,h):
@@ -226,10 +225,8 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             pars = run[0]
             results = camb.get_results(pars)
             h = results.h_of_z(0)
-            kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
-            #interpolator = results.get_matter_power_interpolator(pars, hubble_units=False, k_hunit=False)
-            #kh,z,pk = results.get_nonlinear_matter_power_spectrum(params=pars, hubble_units=False)
-            #pk = interpolator.P(z,kh)
+            #kh,z, pk = results.get_matter_power_spectrum(minkh=kmin, maxkh=kmax, npoints = number_points)
+            kh,z,pk = results.get_linear_matter_power_spectrum(hubble_units=False, k_hunit=False) 
             P_z = []
             if plot == "yes":
                 P_k_camb(z, pk, zplot, P_z, units,h)
@@ -252,19 +249,172 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             return kk, Pk
 
         if units == 'Mpc^3':
+            h = run.h()
+            kmin = kmin/h
+            kmax = kmax/h
             kk = np.linspace(kmin, kmax, number_points)
             Pk = []
             P = []
             Pk_z = []
-            h = run.h()
-            k = kk/h
+            k = kk
             pk_vect = np.vectorize(run.pk)
             for zz in z:
                 P = pk_vect(kk,zz)
                 Pk.append(P)
             return k, Pk
 
+def save_data(code, zz, hubble_array, om_b_array, om_cdm_array,lmax,APSunits=None, MPSunits='(Mpc/h)^3',
+              As=2.3e-9, ns=0.96,r=0, z_pk_max=4,tau=0.09, k_max=3, lens_accuracy=0):
 
+    """Calculate cosmological quantities for all combinations of hubble constant,
+       omega baryion and omega dark matter.
+
+    Args:
+        code (str): "camb" or "class"
+        zz (list): array of redshifts
+        hubble_array (list): array of hubble constants
+        om_b_array (list): array of omega baryion
+        om_cdm_array (list): array of omega dark matter to calculate
+        l_max (float): maximum multipolar moment
+        APSunits (str, optional): angular power spectrum units. None or "muK". Defaults to None.
+        MPSunits (str, optional): matter power spectrum units. '(Mpc/h)^3' o 'Mpc^3'. Defaults to '(Mpc/h)^3'.
+        As (float, optional): comoving curvature power at k=pivot_scalar. Defaults to 2.3e-9.
+        ns (float, optional): scalar spectral index. Defaults to 0.96.
+        r (int, optional): tensor to scalar ratio at pivot. Defaults to 0.
+        z_pk_max (int, optional): maximum redshift to compute for power spectra. Defaults to 4.
+        tau (float, optional): optical depth. Defaults to 0.09.
+        k_max (float, optional): maximum k to calculate (not k/h). Defaults to 3.
+        lens_accuracy (float, optional): Set to 1 or higher if you want to get the lensing potential accurate. Defaults to 0.
+
+    Returns:
+        list: array of [k,Pk], [l,Cl], H, d_A, f
+    """
+    MPS = []
+    APS = []
+    HP = []
+    ADD = []
+    GR = []
+    k = []
+
+    if code == "camb":
+        for H in hubble_array:
+            for om_b in om_b_array:
+                for om_cdm in om_cdm_array:
+                    camb_code = run(zz, "camb", H, om_b, om_cdm, As=As, ns=ns, z_pk_max=z_pk_max, tau=tau, k_max=k_max)
+                    pk = Matter_power_spectrum(zz, camb_code, "camb", l_max=lmax, zplot=[0], units= MPSunits)
+                    cl = Angular_power_spectrum(zz, camb_code, "camb", l_max=lmax, units=APSunits, lens_accuracy=lens_accuracy)
+                    h = HubbleParameter(zz, camb_code, "camb")
+                    da = Angular_diameter_distance(zz, camb_code, "camb")
+                    f = growth_rate(zz, camb_code, "camb")
+                    P_z = []
+                    for i in range(len(zz)):
+                        P = pk[1][i]
+                        P_z.append(P)
+                    MPS.append(P_z)
+                    APS.append(cl[1])
+                    HP.append(h)
+                    ADD.append(da)
+                    GR.append(f)
+                    k = pk[0]
+                    ls = cl[0]
+        MPS = [k, MPS]
+        APS = [ls, APS]
+
+        return MPS, APS, HP, ADD, GR
+
+    if code == "class":
+        for H in hubble_array:
+            for om_b in om_b_array:
+                for om_cdm in om_cdm_array:
+                    class_code = run(zz, "class", H, om_b, om_cdm)
+                    pk = Matter_power_spectrum(zz, class_code, "class", l_max=lmax, zplot=[0], units=MPSunits)
+                    cl = Angular_power_spectrum(zz, class_code, "class", l_max=lmax, units=APSunits)
+                    h = HubbleParameter(zz, class_code, "class")
+                    da = Angular_diameter_distance(zz, class_code, "class")
+                    f = growth_rate(zz, class_code, "class")
+                    P_z = []
+                    for i in range(len(zz)):
+                        P = pk[1][i]
+                        P_z.append(P)
+                    MPS.append(P_z)
+                    APS.append(cl[1])
+                    HP.append(h)
+                    ADD.append(da)
+                    GR.append(f)
+                    k = pk[0]
+                    ls = cl[0]
+        MPS = [k, MPS]
+        APS = [ls, APS]
+
+        return MPS, APS, HP, ADD, GR
+
+def save_data_txt(code, zz, hubble_array, om_b_array, om_cdm_array, paths, names,
+                  lmax,APSunits=None, MPSunits='(Mpc/h)^3',
+                  As=2.3e-9, ns=0.96,r=0, z_pk_max=4,tau=0.09, k_max=3, lens_accuracy=0):
+    """Save cosmological quantities for all combinations of hubble constant,
+       omega baryion and omega dark matter in .txt.
+
+    Args:
+        code (str): "camb" or "class"
+        zz (list): array of redshifts
+        hubble_array (list): array of hubble constants
+        om_b_array (list): array of omega baryion
+        om_cdm_array (list): array of omega dark matter to calculate
+        paths (list[str]): array of paths to save .txt. order: PK,k,Cl,H,d_A,f,l
+        names (lisrt[str]): array of names of .txt. order: PK,k,Cl,H,d_A,f,l
+        l_max (float): maximum multipolar moment
+        APSunits (str, optional): angular power spectrum units. None or "muK". Defaults to None.
+        MPSunits (str, optional): matter power spectrum units. '(Mpc/h)^3' o 'Mpc^3'. Defaults to '(Mpc/h)^3'.
+        As (float, optional): comoving curvature power at k=pivot_scalar. Defaults to 2.3e-9.
+        ns (float, optional): scalar spectral index. Defaults to 0.96.
+        r (int, optional): tensor to scalar ratio at pivot. Defaults to 0.
+        z_pk_max (int, optional): maximum redshift to compute for power spectra. Defaults to 4.
+        tau (float, optional): optical depth. Defaults to 0.09.
+        k_max (float, optional): maximum k to calculate (not k/h). Defaults to 3.
+        lens_accuracy (float, optional): Set to 1 or higher if you want to get the lensing potential accurate. Defaults to 0.
+    """
+
+    if code == "camb":
+        for H in hubble_array:
+            for om_b in om_b_array:
+                for om_cdm in om_cdm_array:
+                    camb_code = run(zz, "camb", H, om_b, om_cdm)
+                    MPS = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot=[0])
+                    APS = Angular_power_spectrum(zz, camb_code, "camb", l_max=2500, units=None)
+                    HP = HubbleParameter(zz, camb_code, "camb")
+                    ADD = Angular_diameter_distance(zz, camb_code, "camb")
+                    GR = growth_rate(zz, camb_code, "camb")
+                    P = []
+                    for i in range(len(zz)):
+                        PK = MPS[1][i]
+                        np.savetxt(paths[0][0] + names[0][0] + "_z="+str(np.round(zz[i],5)) +"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", PK)
+                        np.savetxt(paths[0][1]+ names[0][1]+ ".txt", MPS[0])                        
+                    np.savetxt(paths[0][2] + names[0][2]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", APS[1])
+                    np.savetxt(paths[0][3] + names[0][3]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", HP)
+                    np.savetxt(paths[0][4] + names[0][4]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", ADD)
+                    np.savetxt(paths[0][5] + names[0][5]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", GR)
+                    np.savetxt(paths[0][6]+ names[0][6]+ ".txt", APS[0])
+
+    if code == "class":
+            for H in hubble_array:
+                for om_b in om_b_array:
+                    for om_cdm in om_cdm_array:
+                        class_code = run(zz, "class", H, om_b, om_cdm)
+                        MPS = Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=[0])
+                        APS = Angular_power_spectrum(zz, class_code, "class", l_max=2500, units=None)
+                        HP = HubbleParameter(zz, class_code, "class")
+                        ADD = Angular_diameter_distance(zz, class_code, "class")
+                        GR = growth_rate(zz, class_code, "class")
+                        P = []
+                        for i in range(len(zz)):
+                            PK = MPS[1][i]
+                            np.savetxt(paths[1][0] + names[1][0]+ "_z="+str(np.round(zz[i],5)) +"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", PK)
+                            np.savetxt(paths[1][1] + names[1][1]+".txt", MPS[0])
+                        np.savetxt(paths[1][2] + names[1][2]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", APS[1])
+                        np.savetxt(paths[1][3]+ names[1][3]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", HP)
+                        np.savetxt(paths[1][4]+ names[1][4]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", ADD)
+                        np.savetxt(paths[1][5]+ names[1][5]+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", GR)
+                        np.savetxt(paths[1][6]+ names[1][6]+ ".txt", APS[0])
 '''
 z_plot = [0,1,2]
 zmin = 0
@@ -340,48 +490,6 @@ plt.ylabel(r'Growth rate $f_g(z)$')
 plt.xlabel(r'$z$')
 #plt.show()
 plt.clf() 
-
-def save_data(code, zz, hubble_array, om_b_array, om_cdm_array, APSunits=None):
-
-    if code == "camb":
-        for H in hubble_array:
-            for om_b in om_b_array:
-                for om_cdm in om_cdm_array:
-                    camb_code = run("camb", H, om_b, om_cdm)
-                    MPS = Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot=[0])
-                    APS = Angular_power_spectrum(zz, camb_code, "camb", l_max=2500, units=None)
-                    HP = HubbleParameter(zz, camb_code, "camb")
-                    ADD = Angular_diameter_distance(zz, camb_code, "camb")
-                    GR = growth_rate(zz, camb_code, "camb")
-                    P = []
-                    for i in range(len(zz)):
-                        PK = MPS[1][i]
-                        #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_P(k)/camb_P(k)"+ "_z="+str(np.round(zz[i],5)) +"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", PK)
-                        #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_P(k)/camb_k.txt", MPS[0])
-                    #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_C_l(l)/camb_Cl(l)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", APS[1])
-                    #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_H(z)/camb_H(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", HP)
-                    #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_d_A(z)/camb_d_A(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", ADD)
-                    #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_f(z)/camb_f(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", GR)
-
-    if code == "class":
-            for H in hubble_array:
-                for om_b in om_b_array:
-                    for om_cdm in om_cdm_array:
-                        class_code = run("class", H, om_b, om_cdm)
-                        MPS = Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=[0])
-                        APS = Angular_power_spectrum(zz, class_code, "class", l_max=2500, units=None)
-                        HP = HubbleParameter(zz, class_code, "class")
-                        ADD = Angular_diameter_distance(zz, class_code, "class")
-                        GR = growth_rate(zz, class_code, "class")
-                        P = []
-                        for i in range(len(zz)):
-                            PK = MPS[1][i]
-                            #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_P(k)/class_P(k)"+ "_z="+str(np.round(zz[i],5)) +"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", PK)
-                            #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_P(k)/class_k.txt", MPS[0])
-                        #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_C_l(l)/class_Cl(l)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", APS[1])
-                        #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_H(z)/class_H(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", HP)
-                        #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_d_A(z)/class_d_A(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", ADD)
-                        #np.savetxt("/home/gerald/Documentos/proyecto_cmb/cmb-1/data/class/class_f(z)/class_f(z)"+"_H="+str(H)+"_omb="+str(om_b)+"_omcmd="+str(om_cdm)+ ".txt", GR)
                         
 hubble_array = np.arange(65,75,5)
 om_b_array = np.arange(0.01,0.03,0.01)
