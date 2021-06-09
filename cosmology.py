@@ -13,17 +13,36 @@ import matplotlib.pyplot as plt
 path = '/home/gerald/Documentos/proyecto_cmb/cmb-1/boltzmann_codes.py' #boltzmann_codes.py path
 sys.path.insert(0, path)
 import boltzmann_codes
+import time
 
-z_plot = [0,1,2]
+t0= time.clock()
+print(t0)
+
+z_plot = [0,1,2,3]
 zmin = 0
 zmax = 3
-step = 0.05
+step = 0.5
 zz = np.arange(zmin,zmax,step)
-camb_code = boltzmann_codes.run(zz, "camb", 70, 0.04, 0.24)
-class_code = boltzmann_codes.run(zz, "class", 70, 0.04, 0.24)
 
-p1 = boltzmann_codes.Matter_power_spectrum(z_plot, camb_code, "camb", l_max=2500, zplot=z_plot, plot='yes', units='(Mpc/h)^3')
-p2 = boltzmann_codes.Matter_power_spectrum(z_plot, class_code, "class", l_max=2500, zplot=z_plot, plot='yes', units='(Mpc/h)^3')
+#camb_code = boltzmann_codes.run(zz, "camb", 70, 0.04, 0.24)
+#class_code = boltzmann_codes.run(zz, "class", 70, 0.04, 0.24)
+
+boltzmann_codes.params_eps(boltzmann_codes.save_data, [70, 0.04, 0.24, 2.3e-9, 0.96, 0, 0.09], 0.01, 'camb', zz, 
+                           lmax=2500, perturbations=False, z_pk=zz)
+
+t = time.clock() - t0
+print(t)
+
+#hubble_array = np.arange(65,75,7.5)
+#om_b_array = np.arange(0.03,0.05,0.015)
+#om_cdm_array = np.arange(0.23,0.25,0.015)
+#save_camb_array = boltzmann_codes.save_data("camb", zz, 70, 0.04, 0.24, lmax=2500, perturbations=True)
+#save_class_array = boltzmann_codes.save_data("class", zz, 70, 0.04, 0.24, lmax=2500, perturbations=False)
+#save_class = boltzmann_codes.save_data_array("class", zz, hubble_array, om_b_array, om_cdm_array,lmax=2500)
+
+'''
+p1 = boltzmann_codes.Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot=z_plot, plot='yes', units='(Mpc/h)^3')
+p2 = boltzmann_codes.Matter_power_spectrum(zz, class_code, "class", l_max=2500, zplot=zz, plot='yes', units='(Mpc/h)^3')
 
 a1 = boltzmann_codes.Angular_power_spectrum(zz, camb_code, "camb", l_max=2500, units=None)
 a2 = boltzmann_codes.Angular_power_spectrum(zz, class_code, "class", l_max=2500, units=None)
@@ -37,11 +56,6 @@ d_a2 = boltzmann_codes.Angular_diameter_distance(zz, class_code, "class")
 f1 = boltzmann_codes.growth_rate(zz, camb_code, "camb")
 f2 = boltzmann_codes.growth_rate(zz, class_code, "class")
 
-hubble_array = np.arange(65,75,5)
-om_b_array = np.arange(0.03,0.05,0.01)
-om_cdm_array = np.arange(0.23,0.25,0.01)
-
-'''
 paths = [["/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_P(k)/","/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_P(k)/", 
 "/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_C_l(l)/","/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_H(z)/",
 "/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_d_A(z)/", "/home/gerald/Documentos/proyecto_cmb/cmb-1/data/camb/camb_f(z)/",
@@ -56,10 +70,6 @@ names = [["camb_P(k)", "camb_k", "camb_Cl(l)", "camb_H(z)", "camb_d_A(z)", "camb
 
 boltzmann_codes.save_data_txt("camb", zz, hubble_array, om_b_array, om_cdm_array, paths, names, lmax=2500)
 boltzmann_codes.save_data_txt("class", zz, hubble_array, om_b_array, om_cdm_array, paths, names,lmax=2500)
-'''
-
-#save_camb = boltzmann_codes.save_data("camb", zz, hubble_array, om_b_array, om_cdm_array,lmax=2500)
-#save_class = boltzmann_codes.save_data("class", zz, hubble_array, om_b_array, om_cdm_array,lmax=2500)
 
 for i in range(len(z_plot)):
     plt.loglog(p1[0], p1[2][i], label = '{}'.format(z_plot[i]))
@@ -105,3 +115,4 @@ plt.ylabel(r'Growth rate $f_g(z)$')
 plt.xlabel(r'$z$')
 plt.show()
 plt.clf() 
+'''

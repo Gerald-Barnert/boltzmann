@@ -101,7 +101,7 @@ def Angular_diameter_distance(z, run, code):
         D_A = DA_vect(z)
         return D_A
 
-def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000):
+def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000, cmb_units='muK'):
     """compute growth rate
 
     Args:
@@ -117,6 +117,7 @@ def growth_rate(z, run, code, min_k=1e-4, max_k=3, n_points = 2000):
     """
     if code == "camb":
         pars, results = run[0], run[1]
+        results.get_cmb_power_spectra(pars, CMB_unit=cmb_units)
         results.get_matter_power_spectrum(minkh=min_k, maxkh=max_k, npoints = n_points)
         fsigma8, sigma8 = results.get_fsigma8(), results.get_sigma8()
         f_growth_rate = np.flip(fsigma8/sigma8)
@@ -239,7 +240,6 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
         if units == '(Mpc/h)^3':
             kk = np.linspace(kmin, kmax, number_points)
             Pk = []
-            P = []
             Pk_z = []
             h = run.h()
             pk_vect = np.vectorize(run.pk)
@@ -254,7 +254,6 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             kmax = kmax/h
             kk = np.linspace(kmin, kmax, number_points)
             Pk = []
-            P = []
             Pk_z = []
             k = kk
             pk_vect = np.vectorize(run.pk)
@@ -263,7 +262,58 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
                 Pk.append(P)
             return k, Pk
 
-def save_data(code, zz, hubble_array, om_b_array, om_cdm_array,lmax,APSunits=None, MPSunits='(Mpc/h)^3',
+def params_eps(save_data, params, epsilon, code, zz, lmax, z_pk=[0], perturbations=True, APSunits=None, MPSunits='(Mpc/h)^3',
+               z_pk_max=4, k_max=3, lens_accuracy=0):
+    for i in range(len(params)):
+        if params[i] == 0:
+            params[i] = epsilon
+        params[i] = params[i] * (1+epsilon)
+        if i>0:
+            params[i-1] = params[i-1] / (1+epsilon)
+        data = save_data(code, zz, params[0], params[1], params[2], lmax, z_pk, perturbations,
+                  APSunits, MPSunits, params[3], params[4], params[5], z_pk_max, 
+                  params[6], k_max, lens_accuracy)
+        print(params)
+    params[-1] = params[-1] / (1+epsilon)
+    params_plus_eps = np.array(params) * (1+epsilon)
+        #print(data)
+    #print(params)
+    #print(params_plus_eps)
+    return params_plus_eps, data
+
+def save_data(code, zz, Hubble0, om_b, om_cdm, lmax, z_pk=[0], perturbations=True, APSunits=None, MPSunits='(Mpc/h)^3',
+              As=2.3e-9, ns=0.96,r=0, z_pk_max=4,tau=0.09, k_max=3, lens_accuracy=0):
+
+        if code == "camb":
+            camb_code = run(zz, "camb", Hubble0, om_b, om_cdm, As=As, ns=ns, z_pk_max=z_pk_max, tau=tau, k_max=k_max)
+            h = HubbleParameter(zz, camb_code, "camb")
+            da = Angular_diameter_distance(zz, camb_code, "camb")
+            if perturbations == True:
+                f = growth_rate(zz, camb_code, "camb", cmb_units=APSunits)
+                pk = Matter_power_spectrum(zz, camb_code, "camb", l_max=lmax, zplot=z_pk, units= MPSunits, plot='yes')
+                cl = Angular_power_spectrum(zz, camb_code, "camb", l_max=lmax, units=APSunits, lens_accuracy=lens_accuracy)
+                k = pk[0]
+                ls = cl[0]
+                return h, da, f, [k, pk[2]], [ls, cl]
+            if perturbations != True:
+                return h, da
+
+        if code == "class":
+            class_code = run(zz, "class", Hubble0, om_b, om_cdm)
+            h = HubbleParameter(zz, class_code, "class")
+            da = Angular_diameter_distance(zz, class_code, "class")
+            if perturbations == True:
+                f = growth_rate(zz, class_code, "class") 
+                pk = Matter_power_spectrum(zz, class_code, "class", l_max=lmax, zplot=z_pk, units=MPSunits, plot='yes')
+                cl = Angular_power_spectrum(zz, class_code, "class", l_max=lmax, units=APSunits) 
+                k = pk[0]
+                ls = cl[0]
+                return  h, da, f, [k, pk[2]], [ls, cl]
+            if perturbations != True:
+                return h, da
+                
+
+def save_data_array(code, zz, hubble_array, om_b_array, om_cdm_array, lmax, perturbations='True', APSunits=None, MPSunits='(Mpc/h)^3',
               As=2.3e-9, ns=0.96,r=0, z_pk_max=4,tau=0.09, k_max=3, lens_accuracy=0):
 
     """Calculate cosmological quantities for all combinations of hubble constant,
@@ -276,6 +326,7 @@ def save_data(code, zz, hubble_array, om_b_array, om_cdm_array,lmax,APSunits=Non
         om_b_array (list): array of omega baryion
         om_cdm_array (list): array of omega dark matter to calculate
         l_max (float): maximum multipolar moment
+        perturbations (str): 'True' to compute Pk and Cl, 'False' only compute H, d_A, f
         APSunits (str, optional): angular power spectrum units. None or "muK". Defaults to None.
         MPSunits (str, optional): matter power spectrum units. '(Mpc/h)^3' o 'Mpc^3'. Defaults to '(Mpc/h)^3'.
         As (float, optional): comoving curvature power at k=pivot_scalar. Defaults to 2.3e-9.
