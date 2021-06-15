@@ -27,18 +27,19 @@ zz = np.arange(zmin,zmax,step)
 #camb_code = boltzmann_codes.run(zz, "camb", 70, 0.04, 0.24)
 #class_code = boltzmann_codes.run(zz, "class", 70, 0.04, 0.24)
 
-boltzmann_codes.params_eps(boltzmann_codes.save_data, [70, 0.04, 0.24, 2.3e-9, 0.96, 0, 0.09], 0.01, 'camb', zz, 
-                           lmax=2500, perturbations=False, z_pk=zz)
+boltzmann_codes.params_eps(boltzmann_codes.save_data, [[70,False], [0.04,False], [0.24,False], [2.3e-9, False],
+                           [0.96,True], [0,False], [0.09,False]], 0.01, 'camb', zz, lmax=2500, perturbations=True, z_pk=zz)
 
-t = time.clock() - t0
-print(t)
 
 #hubble_array = np.arange(65,75,7.5)
 #om_b_array = np.arange(0.03,0.05,0.015)
 #om_cdm_array = np.arange(0.23,0.25,0.015)
-#save_camb_array = boltzmann_codes.save_data("camb", zz, 70, 0.04, 0.24, lmax=2500, perturbations=True)
+save_camb_array = boltzmann_codes.save_data("camb", zz, 70, 0.04, 0.24, lmax=2500, perturbations=False)
 #save_class_array = boltzmann_codes.save_data("class", zz, 70, 0.04, 0.24, lmax=2500, perturbations=False)
 #save_class = boltzmann_codes.save_data_array("class", zz, hubble_array, om_b_array, om_cdm_array,lmax=2500)
+
+t = time.clock() - t0
+print(t)
 
 '''
 p1 = boltzmann_codes.Matter_power_spectrum(zz, camb_code, "camb", l_max=2500, zplot=z_plot, plot='yes', units='(Mpc/h)^3')

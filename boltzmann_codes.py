@@ -265,20 +265,30 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
 def params_eps(save_data, params, epsilon, code, zz, lmax, z_pk=[0], perturbations=True, APSunits=None, MPSunits='(Mpc/h)^3',
                z_pk_max=4, k_max=3, lens_accuracy=0):
     for i in range(len(params)):
-        if params[i] == 0:
-            params[i] = epsilon
-        params[i] = params[i] * (1+epsilon)
+        if params[i][1]==True:
+            if params[i][0] == 0:
+                params[i][0] = epsilon
+            params[i][0] = params[i][0] * (1+epsilon)
         if i>0:
-            params[i-1] = params[i-1] / (1+epsilon)
-        data = save_data(code, zz, params[0], params[1], params[2], lmax, z_pk, perturbations,
-                  APSunits, MPSunits, params[3], params[4], params[5], z_pk_max, 
-                  params[6], k_max, lens_accuracy)
-        print(params)
-    params[-1] = params[-1] / (1+epsilon)
-    params_plus_eps = np.array(params) * (1+epsilon)
+            if params[i-1][1]==True:
+                params[i-1][0] = params[i-1][0] / (1+epsilon)
+        if params[i][1]==True:
+            data = save_data(code, zz, params[0][0], params[1][0], params[2][0], lmax, z_pk, perturbations,
+                      APSunits, MPSunits, params[3][0], params[4][0], params[5][0], z_pk_max, 
+                      params[6][0], k_max, lens_accuracy)
+            print(params)
+    if params[-1][0]==True:
+        params[-1][0] = params[-1][0] / (1+epsilon)
+    #params_plus_eps = np.array(params[:][0]) * (1+epsilon)
         #print(data)
-    #print(params)
-    #print(params_plus_eps)
+    params_plus_eps=[]
+    for i in range(len(params)):
+        p = params[i][0]*(1+epsilon)
+        params_plus_eps.append([p, params[i][1]])
+        if params[i][0]==0:
+            params_plus_eps[i][0]=epsilon
+    print(params)
+    print(params_plus_eps)
     return params_plus_eps, data
 
 def save_data(code, zz, Hubble0, om_b, om_cdm, lmax, z_pk=[0], perturbations=True, APSunits=None, MPSunits='(Mpc/h)^3',
