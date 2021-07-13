@@ -136,10 +136,10 @@ axs[1, 1].set_xlim((0.01,2))
 axs[1, 1].set_ylim((0,1.1))
 axs[1, 1].ticklabel_format(axis='both', style='sci', scilimits=(0,0))
 axs[1, 1].set_title(r'$P(k)$')
-fig.tight_layout()
-fig.suptitle('Relative Errors', y=0.98, fontsize=13)
+fig.tight_layout(w_pad=4)
+fig.suptitle('Relative Errors', y=0.99, fontsize=13)
 plt.subplots_adjust(left=0.1, right=0.95, bottom=0.1, top=0.9)
-#plt.savefig('new_plots/relative_errors')
+plt.savefig('new_plots/relative_errors')
 plt.show()
 
 
