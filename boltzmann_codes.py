@@ -243,10 +243,17 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             Pk_z = []
             h = run.h()
             pk_vect = np.vectorize(run.pk)
-            for zz in z:
-                P = pk_vect(kk*h,zz) * h**3
-                Pk.append(P)
-            return kk, Pk
+            if plot == "no":
+                for zz in z:
+                    P = pk_vect(kk*h,zz) * h**3
+                    Pk.append(P)
+                return kk, Pk
+            if plot == "yes":
+                for zz in zplot:
+                    P = pk_vect(kk*h,zz) * h**3
+                    Pk.append(P)
+                return kk, Pk
+                
 
         if units == 'Mpc^3':
             h = run.h()
@@ -257,10 +264,16 @@ def Matter_power_spectrum(z, run, code, l_max, zplot, kmin=1e-4, kmax=2, number_
             Pk_z = []
             k = kk
             pk_vect = np.vectorize(run.pk)
-            for zz in z:
-                P = pk_vect(kk,zz)
-                Pk.append(P)
-            return k, Pk
+            if plot == "no":
+                for zz in z:
+                    P = pk_vect(kk,zz)
+                    Pk.append(P)
+                return k, Pk
+            if plot == "yes":
+                for zz in zplot:
+                    P = pk_vect(kk,zz)
+                    Pk.append(P)
+                return k, Pk
 
 def params_eps(save_data, params, epsilon, code, zz, lmax, z_pk=[0], perturbations=True, APSunits=None, MPSunits='(Mpc/h)^3',
                z_pk_max=4, k_max=3, lens_accuracy=0):
